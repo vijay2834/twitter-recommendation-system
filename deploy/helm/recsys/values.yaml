@@ -1,0 +1,22 @@
+image:
+  repository: ghcr.io/vijay2834/recsys
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+replicaCount: 3
+service:
+  type: ClusterIP
+  port: 80
+db:
+  url: jdbc:mysql://mysql.recsys.svc.cluster.local:3306/recsys
+  user: recsys
+  existingSecret: recsys-db        # kubectl create secret generic recsys-db --from-literal=password=...
+  poolSize: 32
+cacheSize: 100000
+resources:
+  requests: { cpu: "1", memory: 1Gi }
+  limits:   { cpu: "2", memory: 2Gi }
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 65

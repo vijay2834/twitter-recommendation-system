@@ -1,0 +1,24 @@
+# Local stack: MySQL + recommendation service. Load data with ./db/load.sh after `docker compose up -d`.
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: recsys
+      MYSQL_USER: recsys
+      MYSQL_PASSWORD: ${DB_PASSWORD:-recsys}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change-me}
+    command: ["--local-infile=1", "--innodb-buffer-pool-size=1G"]
+    volumes: ["./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro", "mysql-data:/var/lib/mysql"]
+    ports: ["3306:3306"]
+    healthcheck: { test: ["CMD", "mysqladmin", "ping", "-h", "localhost"], interval: 5s, retries: 20 }
+  recsys:
+    build: ./service
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/recsys
+      DB_USER: recsys
+      DB_PASSWORD: ${DB_PASSWORD:-recsys}
+      DB_POOL_SIZE: "32"
+    ports: ["8080:8080"]
+    depends_on: { mysql: { condition: service_healthy } }
+volumes:
+  mysql-data:
